@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { FormEvent, useState } from 'react'
 import Image from 'next/image'
 
 export default function LandingPage() {
@@ -10,8 +10,8 @@ export default function LandingPage() {
   const [consent, setConsent] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [isFinalSubmitted, setIsFinalSubmitted] = useState(false)
-  const [editingField, setEditingField] = useState(null)
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [editingField, setEditingField] = useState<string | null>(null)
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [overallProgress, setOverallProgress] = useState(0);
 
   const buyQuestions = [
@@ -141,7 +141,7 @@ export default function LandingPage() {
     setOverallProgress(0);
   }
 
-  const handleAnswer = (answer: any) => {
+  const handleAnswer = (answer: string) => {
     setSelectedAnswer(answer);
     setAnswers({ ...answers, [questions[step].id]: answer });
     if (step < questions.length - 1) {
@@ -171,7 +171,7 @@ export default function LandingPage() {
     }
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (consent) {
       setIsVerifying(true)
@@ -180,11 +180,11 @@ export default function LandingPage() {
     }
   }
 
-  const handleEdit = (field: any) => {
+  const handleEdit = (field: string | null) => {
     setEditingField(field)
   }
 
-  const handleSaveEdit = (field: any, value: any) => {
+  const handleSaveEdit = (field: string, value: string) => {
     setAnswers({ ...answers, [field]: value })
     setEditingField(null)
   }
