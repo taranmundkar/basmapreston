@@ -158,7 +158,6 @@ export default function LandingPage() {
     if (step > 0) {
       setStep(step - 1);
       const newAnswers = { ...answers };
-      //@ts-ignore
       delete newAnswers[questions[step].id]
       setAnswers(newAnswers);
       setOverallProgress(((step - 1) / questions.length) * 100);
@@ -196,7 +195,6 @@ export default function LandingPage() {
   }
 
   const currentQuestion = questions[step]
-  //@ts-ignore
   const isAnswered = answers[currentQuestion?.id]
 
   return (
@@ -268,7 +266,6 @@ export default function LandingPage() {
                 <input
                   type="text"
                   onChange={(e) => setAnswers({ ...answers, [currentQuestion.id]: e.target.value })}
-                  //@ts-ignore
                   value={answers[currentQuestion.id] || ''}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
                   placeholder={`Enter your ${currentQuestion.id}`}
@@ -337,7 +334,6 @@ export default function LandingPage() {
                         className="w-24 px-2 py-1 text-sm border border-gray-300 rounded-md"
                       />
                       <button
-                        //@ts-ignore
                         onClick={() => handleSaveEdit(q.id, answers[q.id])}
                         className="ml-2 text-xs text-gray-700 hover:underline"
                       >
