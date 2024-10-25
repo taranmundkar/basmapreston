@@ -233,7 +233,9 @@ export default function LandingPage() {
                 </button>
               </div>
               <div className="mt-6 text-center text-xs text-gray-600">
-                <p>&copy; 2024 Basma Preston. All rights reserved.</p>
+                <p>
+                  &copy; 2024 <a href="https://basmapreston.royallepage.ca/" target="_blank" rel="noopener noreferrer" className="hover:underline">Basma Preston</a>. All rights reserved.
+                </p>
                 <p className="mt-1">
                   <a href="https://basmapreston.royallepage.ca/privacy.php" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:underline">Privacy Policy</a>
                 </p>
@@ -314,6 +316,7 @@ export default function LandingPage() {
                   >
                     Next
                   </button>
+                
                 )}
               </div>
             </form>
@@ -398,7 +401,9 @@ export default function LandingPage() {
           ) : null}
         </div>
         <footer className="mt-6 text-center text-xs text-gray-700 drop-shadow">
-          <p>&copy; 2024 Basma Preston. All rights reserved.</p>
+          <p>
+            &copy; 2024 <a href="https://basmapreston.royallepage.ca/" target="_blank" rel="noopener noreferrer" className="hover:underline">Basma Preston</a>. All rights reserved.
+          </p>
           <p className="mt-1">
             <a href="https://basmapreston.royallepage.ca/privacy.php" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:underline">Privacy Policy</a>
           </p>
