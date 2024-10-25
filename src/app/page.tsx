@@ -153,7 +153,6 @@ export default function LandingPage() {
     }
   };
 
-
   const handleBack = () => {
     if (step > 0) {
       setStep(step - 1);
@@ -162,7 +161,6 @@ export default function LandingPage() {
       setAnswers(newAnswers);
       setOverallProgress(((step - 1) / questions.length) * 100);
     } else {
-      // Reset to initial state when going back from the first question
       setUserType(null);
       setStep(0);
       setAnswers({});
@@ -235,9 +233,9 @@ export default function LandingPage() {
                 </button>
               </div>
               <div className="mt-6 text-center text-xs text-gray-600">
-                <p>&copy; 2024 TTM Media. All rights reserved.</p>
+                <p>&copy; 2024 Basma Preston. All rights reserved.</p>
                 <p className="mt-1">
-                  <a href="#" className="text-gray-600 hover:underline">Privacy Policy</a>
+                  <a href="https://basmapreston.royallepage.ca/privacy.php" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:underline">Privacy Policy</a>
                 </p>
               </div>
             </div>
@@ -282,7 +280,7 @@ export default function LandingPage() {
                     />
                     <span className="ml-2 text-xs text-gray-700">
                       I consent to submitting my information and agree to the{' '}
-                      <a href="#" className="text-gray-700 hover:underline">
+                      <a href="https://basmapreston.royallepage.ca/privacy.php" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:underline">
                         Privacy Policy
                       </a>
                       .
@@ -321,7 +319,7 @@ export default function LandingPage() {
             </form>
           ) : isVerifying && !isFinalSubmitted ? (
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">Verify Your Information</h2>
+              <h2 className="text-xl font-semibold text-gray-700  mb-3 text-center">Verify Your Information</h2>
               {questions.map((q) => (
                 <div key={q.id} className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">{q.question}</span>
@@ -400,10 +398,9 @@ export default function LandingPage() {
           ) : null}
         </div>
         <footer className="mt-6 text-center text-xs text-gray-700 drop-shadow">
-          <p>&copy; 2024 TTM Media. All rights reserved.</p>
+          <p>&copy; 2024 Basma Preston. All rights reserved.</p>
           <p className="mt-1">
-            <a href="#" className="text-gray-700 hover:underline">Privacy Policy</a> |
-            <a href="#" className="text-gray-700 hover:underline ml-2">Terms of Service</a>
+            <a href="https://basmapreston.royallepage.ca/privacy.php" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:underline">Privacy Policy</a>
           </p>
         </footer>
       </main>
