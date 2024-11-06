@@ -6,19 +6,26 @@ import Image from 'next/image'
 export default function LandingPage() {
   const [userType, setUserType] = useState<'buy' | 'sell' | 'rent' | null>(null)
   const [step, setStep] = useState(0)
-  const [answers, setAnswers] = useState<{ [key: string]: string }>({})
+  const [answers, setAnswers] = useState<{ [key: string]: string | string[] }>({})
   const [consent, setConsent] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [isFinalSubmitted, setIsFinalSubmitted] = useState(false)
   const [editingField, setEditingField] = useState<string | null>(null)
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
 
   const buyQuestions = [
     {
       id: 'budget',
-      question: 'What is your budget for buying a home?',
-      options: ['Under $200,000', '$200,000-$300,000', '$300,000-$400,000', '$400,000-$500,000', '$500,000+'],
+      question: 'What is your budget for buying a home? (Select all that apply)',
+      options: ['$200,000-$400,000', '$400,000-$600,000', '$600,000-$800,000', '$800,000-$1,000,000', '$1,000,000-$1,500,000', '$1,500,000-$2,000,000', '$2,000,000+'],
+      multiple: true,
+    },
+    {
+      id: 'homeType',
+      question: 'What type of home are you interested in? (Select all that apply)',
+      options: ['Single-family detached', 'Semi-detached', 'Townhouse', 'Condo/Apartment', 'Duplex', 'Bungalow', 'Split-level', 'Cottage/Cabin', 'Mobile home', 'Luxury estate'],
+      multiple: true,
     },
     {
       id: 'bedrooms',
@@ -139,17 +146,27 @@ export default function LandingPage() {
     setStep(0)
     setAnswers({})
     setOverallProgress(0);
+    setSelectedAnswers([]);
   }
 
   const handleAnswer = (answer: string) => {
-    setSelectedAnswer(answer);
-    setAnswers({ ...answers, [questions[step].id]: answer });
-    if (step < questions.length - 1) {
-      setStep(step + 1);
-      setSelectedAnswer(null);
-      setOverallProgress(((step + 2) / questions.length) * 100);
+    const currentQuestion = questions[step];
+    if (currentQuestion.multiple) {
+      const updatedAnswers = selectedAnswers.includes(answer)
+        ? selectedAnswers.filter(a => a !== answer)
+        : [...selectedAnswers, answer];
+      setSelectedAnswers(updatedAnswers);
+      setAnswers({ ...answers, [currentQuestion.id]: updatedAnswers });
     } else {
-      setOverallProgress(100);
+      setSelectedAnswers([answer]);
+      setAnswers({ ...answers, [currentQuestion.id]: answer });
+      if (step < questions.length - 1) {
+        setStep(step + 1);
+        setSelectedAnswers([]);
+        setOverallProgress(((step + 1) / questions.length) * 100);
+      } else {
+        setOverallProgress(100);
+      }
     }
   };
 
@@ -160,11 +177,12 @@ export default function LandingPage() {
       delete newAnswers[questions[step].id]
       setAnswers(newAnswers);
       setOverallProgress(((step - 1) / questions.length) * 100);
+      setSelectedAnswers(Array.isArray(answers[questions[step - 1].id]) ? answers[questions[step - 1].id] as string[] : []);
     } else {
       setUserType(null);
       setStep(0);
       setAnswers({});
-      setSelectedAnswer(null);
+      setSelectedAnswers([]);
       setOverallProgress(0);
     }
   };
@@ -182,7 +200,7 @@ export default function LandingPage() {
     setEditingField(field)
   }
 
-  const handleSaveEdit = (field: string, value: string) => {
+  const handleSaveEdit = (field: string, value: string | string[]) => {
     setAnswers({ ...answers, [field]: value })
     setEditingField(null)
   }
@@ -244,8 +262,11 @@ export default function LandingPage() {
           ) : !isVerifying && !isFinalSubmitted ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">{currentQuestion.question}</h2>
-              <div className="space-y-2">
-                <progress value={overallProgress} className="w-full h-2" />
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className="bg-gray-600 h-2.5 rounded-full transition-all duration-300 ease-in-out"
+                  style={{ width: `${overallProgress}%` }}
+                ></div>
               </div>
               {currentQuestion.options ? (
                 <div className="grid grid-cols-2 gap-3 mt-4">
@@ -254,9 +275,7 @@ export default function LandingPage() {
                       key={option}
                       type="button"
                       onClick={() => handleAnswer(option)}
-                      className={`px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 ${selectedAnswer === option ? 'bg-gray-200' : ''
-                        }`}
-                      disabled={selectedAnswer !== null}
+                      className={`px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 ${selectedAnswers.includes(option) ? 'bg-gray-200' : ''}`}
                     >
                       {option}
                     </button>
@@ -266,7 +285,7 @@ export default function LandingPage() {
                 <input
                   type="text"
                   onChange={(e) => setAnswers({ ...answers, [currentQuestion.id]: e.target.value })}
-                  value={answers[currentQuestion.id] || ''}
+                  value={answers[currentQuestion.id] as string || ''}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
                   placeholder={`Enter your ${currentQuestion.id}`}
                 />
@@ -294,7 +313,7 @@ export default function LandingPage() {
                 <div>
                   <button
                     onClick={handleBack}
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none  focus:ring-2 focus:ring-offset-2  focus:ring-gray-500  disabled:opacity-50"
                   >
                     Back
                   </button>
@@ -303,20 +322,31 @@ export default function LandingPage() {
                   <button
                     type="submit"
                     disabled={!consent || !isAnswered}
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-md text-white bg-gray-700 hover:bg-gray-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-md text-white bg-gray-700 hover:bg-gray-800 transition-colors duration-200 focus:outline-none  focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
                   >
                     Submit
                   </button>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setStep(step + 1)}
-                    disabled={!isAnswered}
+                    onClick={() => {
+                      if (currentQuestion.multiple) {
+                        if (selectedAnswers.length > 0) {
+                          setStep(step + 1);
+                          setSelectedAnswers([]);
+                          setOverallProgress(((step + 2) / questions.length) * 100);
+                        }
+                      } else {
+                        setStep(step + 1);
+                        setSelectedAnswers([]);
+                        setOverallProgress(((step + 2) / questions.length) * 100);
+                      }
+                    }}
+                    disabled={!isAnswered || (currentQuestion.multiple && selectedAnswers.length === 0)}
                     className="px-3 py-2 text-sm border border-gray-300 rounded-md text-white bg-gray-700 hover:bg-gray-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
                   >
                     Next
                   </button>
-                
                 )}
               </div>
             </form>
@@ -330,7 +360,7 @@ export default function LandingPage() {
                     <div className="flex items-center">
                       <input
                         type="text"
-                        value={answers[q.id] || ''}
+                        value={Array.isArray(answers[q.id]) ? (answers[q.id] as string[]).join(', ') : answers[q.id] as string}
                         onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
                         className="w-24 px-2 py-1 text-sm border border-gray-300 rounded-md"
                       />
@@ -343,7 +373,9 @@ export default function LandingPage() {
                     </div>
                   ) : (
                     <div className="flex items-center">
-                      <span className="text-sm text-gray-700">{answers[q.id]}</span>
+                      <span className="text-sm text-gray-700">
+                        {Array.isArray(answers[q.id]) ? (answers[q.id] as string[]).join(', ') : answers[q.id] as string}
+                      </span>
                       <button
                         onClick={() => handleEdit(q.id)}
                         className="ml-2 text-xs text-gray-700 hover:underline"
@@ -392,6 +424,7 @@ export default function LandingPage() {
                   setIsVerifying(false)
                   setIsFinalSubmitted(false)
                   setOverallProgress(0);
+                  setSelectedAnswers([]);
                 }}
                 className="mt-4 px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               >
