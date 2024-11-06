@@ -27,11 +27,11 @@ export async function POST(req: Request) {
     });
 
     console.log('Authenticating with Google...');
-    const client = await auth.getClient();
+    const authClient = await auth.getClient();
     console.log('Authentication successful');
 
     // Initialize Google Sheets API
-    const sheets = google.sheets('v4');
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
 
     // Prepare the data for the spreadsheet
     const values = [
@@ -51,7 +51,6 @@ export async function POST(req: Request) {
 
     console.log('Appending data to Google Sheet...');
     const response = await sheets.spreadsheets.values.append({
-      auth: client,
       spreadsheetId: process.env.GOOGLE_SHEET_ID,
       range: 'Form Responses!A1',
       valueInputOption: 'USER_ENTERED',
