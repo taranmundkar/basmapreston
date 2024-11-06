@@ -15,10 +15,8 @@ try {
     credentials,
   });
 } catch (error) {
-  console.error('Error parsing GOOGLE_APPLICATION_CREDENTIALS_JSON:', error);
-  auth = new GoogleAuth({
-    scopes: SCOPES,
-  });
+  console.error('Error initializing GoogleAuth:', error);
+  throw new Error('Failed to initialize GoogleAuth');
 }
 
 let sheetsApi: sheets_v4.Sheets | null = null;
@@ -26,10 +24,15 @@ let sheetsApi: sheets_v4.Sheets | null = null;
 async function getSheets(): Promise<sheets_v4.Sheets> {
   if (!sheetsApi) {
     try {
+      console.log('Getting auth client...');
       const authClient = await auth.getClient() as OAuth2Client;
+      console.log('Auth client obtained successfully');
+      
+      console.log('Initializing Google Sheets API...');
       sheetsApi = google.sheets({ version: 'v4', auth: authClient });
+      console.log('Google Sheets API initialized successfully');
     } catch (error) {
-      console.error('Error getting auth client:', error);
+      console.error('Error in getSheets:', error);
       throw new Error('Failed to initialize Google Sheets API');
     }
   }
@@ -47,7 +50,9 @@ export async function POST(req: Request) {
       throw new Error('Missing required environment variable: GOOGLE_SHEET_ID');
     }
 
+    console.log('Getting Sheets API...');
     const sheets = await getSheets();
+    console.log('Sheets API obtained successfully');
 
     const values = [
       [
