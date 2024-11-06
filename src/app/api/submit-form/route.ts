@@ -1,6 +1,6 @@
 import { google, sheets_v4 } from 'googleapis';
 import { NextResponse } from 'next/server';
-import { GoogleAuth } from 'google-auth-library';
+import { GoogleAuth, OAuth2Client } from 'google-auth-library';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
@@ -15,7 +15,7 @@ let sheetsApi: sheets_v4.Sheets | null = null;
 
 async function getSheets(): Promise<sheets_v4.Sheets> {
   if (!sheetsApi) {
-    const authClient = await auth.getClient();
+    const authClient = await auth.getClient() as OAuth2Client;
     sheetsApi = google.sheets({ version: 'v4', auth: authClient });
   }
   return sheetsApi;
