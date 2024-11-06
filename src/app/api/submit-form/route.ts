@@ -1,8 +1,25 @@
-import { google } from 'googleapis';
+import { google, sheets_v4 } from 'googleapis';
 import { NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
+
+// Initialize the Google Auth client with Workload Identity Federation
+const auth = new GoogleAuth({
+  scopes: SCOPES,
+  // Use the GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable
+  credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '{}'),
+});
+
+let sheetsApi: sheets_v4.Sheets | null = null;
+
+async function getSheets(): Promise<sheets_v4.Sheets> {
+  if (!sheetsApi) {
+    const authClient = await auth.getClient();
+    sheetsApi = google.sheets({ version: 'v4', auth: authClient });
+  }
+  return sheetsApi;
+}
 
 export async function POST(req: Request) {
   console.log('Received form submission request');
@@ -17,17 +34,8 @@ export async function POST(req: Request) {
       throw new Error('Missing required environment variable: GOOGLE_SHEET_ID');
     }
 
-    // Initialize Google Auth using Application Default Credentials
-    const auth = new GoogleAuth({
-      scopes: SCOPES,
-    });
-
-    console.log('Authenticating with Google...');
-    const authClient = await auth.getClient();
-    console.log('Authentication successful');
-
-    // Initialize Google Sheets API
-    const sheets = google.sheets({ version: 'v4', auth: authClient });
+    // Get the Sheets API client
+    const sheets = await getSheets();
 
     // Prepare the data for the spreadsheet
     const values = [
