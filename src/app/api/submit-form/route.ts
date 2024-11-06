@@ -4,7 +4,7 @@ import { GoogleAuth, OAuth2Client } from 'google-auth-library';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
-let auth: GoogleAuth;
+let auth: GoogleAuth | null = null;
 
 function initializeGoogleAuth() {
   try {
@@ -18,7 +18,6 @@ function initializeGoogleAuth() {
     });
   } catch (error) {
     console.error('Error initializing GoogleAuth:', error);
-    // Instead of throwing an error, we'll set auth to null
     auth = null;
   }
 }
