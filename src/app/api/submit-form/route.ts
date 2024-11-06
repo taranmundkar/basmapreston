@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
-import { GoogleAuth } from 'google-auth-library';
+import { GoogleAuth, OAuth2Client } from 'google-auth-library';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
@@ -20,18 +20,18 @@ export async function POST(req: Request) {
       }
     }
 
-    // Initialize Google Auth
+    // Initialize Google Auth with explicit typing
     const auth = new GoogleAuth({
       scopes: SCOPES,
       projectId: process.env.GOOGLE_PROJECT_ID,
     });
 
     console.log('Authenticating with Google...');
-    const authClient = await auth.getClient();
+    const authClient = await auth.getClient() as OAuth2Client;
     console.log('Authentication successful');
 
-    // Initialize Google Sheets API
-    const sheets = google.sheets({ version: 'v4', auth: authClient });
+    // Initialize Google Sheets API with explicit typing
+    const sheets = google.sheets('v4');
 
     // Prepare the data for the spreadsheet
     const values = [
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
 
     console.log('Appending data to Google Sheet...');
     const response = await sheets.spreadsheets.values.append({
+      auth: authClient,
       spreadsheetId: process.env.GOOGLE_SHEET_ID,
       range: 'Form Responses!A1',
       valueInputOption: 'USER_ENTERED',
