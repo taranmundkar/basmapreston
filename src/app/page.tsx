@@ -229,13 +229,19 @@ export default function LandingPage() {
       });
 
       if (response.ok) {
-        setIsFinalSubmitted(true)
+        const data = await response.json();
+        if (data.success) {
+          setIsFinalSubmitted(true);
+        } else {
+          throw new Error(data.error || 'Unknown error occurred');
+        }
       } else {
-        throw new Error('Failed to submit form')
+        const errorData = await response.json();
+        throw new Error(`Failed to submit form: ${response.status} ${response.statusText}. ${errorData.error || ''}`)
       }
     } catch (error) {
-      console.error('Error submitting form:', error)
-      alert('There was an error submitting your form. Please try again.')
+      console.error('Error submitting form:', error);
+      alert(`There was an error submitting your form. Please try again. Error details: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
