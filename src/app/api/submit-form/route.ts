@@ -5,25 +5,35 @@ import { GoogleAuth, OAuth2Client } from 'google-auth-library';
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
 let auth: GoogleAuth;
-try {
-  const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON 
-    ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-    : {};
 
-  auth = new GoogleAuth({
-    scopes: SCOPES,
-    credentials,
-  });
-} catch (error) {
-  console.error('Error initializing GoogleAuth:', error);
-  throw new Error('Failed to initialize GoogleAuth');
+function initializeGoogleAuth() {
+  try {
+    const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON 
+      ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+      : {};
+
+    auth = new GoogleAuth({
+      scopes: SCOPES,
+      credentials,
+    });
+  } catch (error) {
+    console.error('Error initializing GoogleAuth:', error);
+    // Instead of throwing an error, we'll set auth to null
+    auth = null;
+  }
 }
+
+// Initialize auth outside of the request handler
+initializeGoogleAuth();
 
 let sheetsApi: sheets_v4.Sheets | null = null;
 
 async function getSheets(): Promise<sheets_v4.Sheets> {
   if (!sheetsApi) {
     try {
+      if (!auth) {
+        throw new Error('GoogleAuth not initialized');
+      }
       console.log('Getting auth client...');
       const authClient = await auth.getClient() as OAuth2Client;
       console.log('Auth client obtained successfully');
