@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // Initialize Google Auth with explicit typing
+    // Initialize Google Auth
     const auth = new GoogleAuth({
       scopes: SCOPES,
       projectId: process.env.GOOGLE_PROJECT_ID,
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     const authClient = await auth.getClient() as OAuth2Client;
     console.log('Authentication successful');
 
-    // Initialize Google Sheets API with explicit typing
+    // Initialize Google Sheets API
     const sheets = google.sheets('v4');
 
     // Prepare the data for the spreadsheet
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       errorMessage = error.message;
     }
 
-    // Log detailed error information (but don't send it to the client)
+    // Log detailed error information
     console.error('Detailed error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
 
     return NextResponse.json(
