@@ -1,6 +1,6 @@
 import { google } from 'googleapis'
 import { NextResponse } from 'next/server'
-import { GoogleAuth } from 'google-auth-library'
+import { GoogleAuth, OAuth2Client } from 'google-auth-library'
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
         })
 
         const client = await auth.getClient()
-        const sheets = google.sheets({ version: 'v4', auth: client })
+        const sheets = google.sheets({ version: 'v4', auth: client as OAuth2Client })
 
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId: process.env.GOOGLE_SHEET_ID,
