@@ -3,6 +3,14 @@
 import { FormEvent, useState } from 'react'
 import Image from 'next/image'
 
+type Question = {
+  id: string;
+  question: string;
+  options?: string[];
+  type?: string;
+  multiple?: boolean;
+}
+
 export default function LandingPage() {
   const [userType, setUserType] = useState<'buy' | 'sell' | 'rent' | null>(null)
   const [step, setStep] = useState(0)
@@ -14,7 +22,7 @@ export default function LandingPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
 
-  const buyQuestions = [
+  const buyQuestions: Question[] = [
     {
       id: 'budget',
       question: 'What is your budget for buying a home? (Select all that apply)',
@@ -59,7 +67,7 @@ export default function LandingPage() {
     },
   ]
 
-  const sellQuestions = [
+  const sellQuestions: Question[] = [
     {
       id: 'propertyType',
       question: 'What type of property are you selling?',
@@ -97,7 +105,7 @@ export default function LandingPage() {
     },
   ]
 
-  const rentQuestions = [
+  const rentQuestions: Question[] = [
     {
       id: 'budget',
       question: 'What is your monthly budget for rent?',
@@ -205,9 +213,30 @@ export default function LandingPage() {
     setEditingField(null)
   }
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     console.log('Form submitted:', answers)
-    setIsFinalSubmitted(true)
+    
+    try {
+      const response = await fetch('/api/submit-form', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userType,
+          ...answers,
+        }),
+      });
+
+      if (response.ok) {
+        setIsFinalSubmitted(true)
+      } else {
+        throw new Error('Failed to submit form')
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error)
+      alert('There was an error submitting your form. Please try again.')
+    }
   }
 
   const currentQuestion = questions[step]
@@ -313,7 +342,7 @@ export default function LandingPage() {
                 <div>
                   <button
                     onClick={handleBack}
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none  focus:ring-2 focus:ring-offset-2  focus:ring-gray-500  disabled:opacity-50"
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2  focus:ring-gray-500  disabled:opacity-50"
                   >
                     Back
                   </button>
