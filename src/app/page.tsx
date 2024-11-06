@@ -214,37 +214,38 @@ export default function LandingPage() {
   }
 
   const handleFinalSubmit = async () => {
-    console.log('Form submitted:', answers)
-    
-    try {
-      const response = await fetch('/api/submit-form', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userType,
-          ...answers,
-        }),
-      });
+  console.log('Submitting form:', answers);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setIsFinalSubmitted(true);
-        } else {
-          throw new Error(data.error || 'Unknown error occurred');
-        }
-      } else {
-        const errorData = await response.json();
-        throw new Error(`Failed to submit form: ${response.status} ${response.statusText}. ${errorData.error || ''}`)
-      }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      alert(`There was an error submitting your form. Please try again. Error details: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  try {
+    const response = await fetch('/api/submit-form', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userType,
+        ...answers,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
     }
-  }
 
+    const data = await response.json();
+
+    if (data.success) {
+      setIsFinalSubmitted(true);
+      console.log('Form submitted successfully');
+    } else {
+      throw new Error(data.message || 'Failed to submit form');
+    }
+  } catch (error) {
+    console.error('Error submitting form:', error);
+    alert(`There was an error submitting your form. Please try again. Error details: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
   const currentQuestion = questions[step]
   const isAnswered = answers[currentQuestion?.id]
 
