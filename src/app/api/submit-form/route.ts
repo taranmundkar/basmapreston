@@ -1,4 +1,4 @@
-import { google, sheets_v4 } from 'googleapis';
+import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
 
