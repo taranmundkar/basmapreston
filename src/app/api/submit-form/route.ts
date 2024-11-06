@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
-import { GoogleAuth, OAuth2Client } from 'google-auth-library';
+import { JWT } from 'google-auth-library';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     console.log('Received form data:', JSON.stringify(body, null, 2));
 
     // Validate required environment variables
-    const requiredEnvVars = ['GOOGLE_PROJECT_ID', 'GOOGLE_SHEET_ID'];
+    const requiredEnvVars = ['GOOGLE_PRIVATE_KEY', 'GOOGLE_CLIENT_EMAIL', 'GOOGLE_SHEET_ID'];
     for (const envVar of requiredEnvVars) {
       if (!process.env[envVar]) {
         throw new Error(`Missing required environment variable: ${envVar}`);
@@ -21,17 +21,18 @@ export async function POST(req: Request) {
     }
 
     // Initialize Google Auth
-    const auth = new GoogleAuth({
+    const auth = new JWT({
+      email: process.env.GOOGLE_CLIENT_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
       scopes: SCOPES,
-      projectId: process.env.GOOGLE_PROJECT_ID,
     });
 
     console.log('Authenticating with Google...');
-    const authClient = await auth.getClient() as OAuth2Client;
+    await auth.authorize();
     console.log('Authentication successful');
 
     // Initialize Google Sheets API
-    const sheets = google.sheets('v4');
+    const sheets = google.sheets({ version: 'v4', auth });
 
     // Prepare the data for the spreadsheet
     const values = [
@@ -51,7 +52,6 @@ export async function POST(req: Request) {
 
     console.log('Appending data to Google Sheet...');
     const response = await sheets.spreadsheets.values.append({
-      auth: authClient,
       spreadsheetId: process.env.GOOGLE_SHEET_ID,
       range: 'Form Responses!A1',
       valueInputOption: 'USER_ENTERED',
