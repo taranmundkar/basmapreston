@@ -1,20 +1,21 @@
 import { google, sheets_v4 } from 'googleapis';
 import { NextResponse } from 'next/server';
-import { GoogleAuth, OAuth2Client } from 'google-auth-library';
+import { JWT } from 'google-auth-library';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
-let auth: GoogleAuth | null = null;
+let auth: JWT | null = null;
 
-function initializeGoogleAuth() {
+async function initializeGoogleAuth() {
   try {
-    const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON 
-      ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-      : {};
+    const keyString = process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}';
+    const keyFile = JSON.parse(keyString as string);
 
-    auth = new GoogleAuth({
-      scopes: SCOPES,
-      credentials,
+    // 2. Create a JWT client
+    auth = new google.auth.JWT({
+      email: keyFile.client_email,
+      key: keyFile.private_key,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
   } catch (error) {
     console.error('Error initializing GoogleAuth:', error);
@@ -25,27 +26,27 @@ function initializeGoogleAuth() {
 // Initialize auth outside of the request handler
 initializeGoogleAuth();
 
-let sheetsApi: sheets_v4.Sheets | null = null;
+let sheets: sheets_v4.Sheets | PromiseLike<sheets_v4.Sheets>
 
 async function getSheets(): Promise<sheets_v4.Sheets> {
-  if (!sheetsApi) {
+  if (!sheets) {
     try {
       if (!auth) {
         throw new Error('GoogleAuth not initialized');
       }
       console.log('Getting auth client...');
-      const authClient = await auth.getClient() as OAuth2Client;
-      console.log('Auth client obtained successfully');
-      
+      await auth.authorize();
+      console.log('Auth client authorized successfully');
+
       console.log('Initializing Google Sheets API...');
-      sheetsApi = google.sheets({ version: 'v4', auth: authClient });
+      sheets = google.sheets({ version: 'v4', auth });
       console.log('Google Sheets API initialized successfully');
     } catch (error) {
       console.error('Error in getSheets:', error);
       throw new Error('Failed to initialize Google Sheets API');
     }
   }
-  return sheetsApi;
+  return sheets;
 }
 
 export async function POST(req: Request) {
@@ -55,9 +56,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     console.log('Received form data:', JSON.stringify(body, null, 2));
 
-    if (!process.env.GOOGLE_SHEET_ID) {
-      throw new Error('Missing required environment variable: GOOGLE_SHEET_ID');
-    }
+    // if (!process.env.GOOGLE_SHEET_ID) {
+    //   throw new Error('Missing required environment variable: GOOGLE_SHEET_ID');
+    // }
 
     console.log('Getting Sheets API...');
     const sheets = await getSheets();
@@ -79,9 +80,10 @@ export async function POST(req: Request) {
     ];
 
     console.log('Appending data to Google Sheet...');
+
     const response = await sheets.spreadsheets.values.append({
-      spreadsheetId: process.env.GOOGLE_SHEET_ID,
-      range: 'Form Responses!A1',
+      spreadsheetId: '1DO_gLNJnUKK5aRSW7NeuFurWUbC6_mq7O_R4YoN1vI4',
+      range: 'A1:A10',
       valueInputOption: 'USER_ENTERED',
       requestBody: { values },
     });
@@ -100,11 +102,11 @@ export async function POST(req: Request) {
     console.error('Detailed error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
 
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal Server Error', 
+      {
+        success: false,
+        error: 'Internal Server Error',
         message: errorMessage
-      }, 
+      },
       { status: 500 }
     );
   }
