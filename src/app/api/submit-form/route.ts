@@ -15,7 +15,7 @@ async function initializeGoogleAuth() {
     auth = new google.auth.JWT({
       email: keyFile.client_email,
       key: keyFile.private_key,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      scopes: SCOPES,
     });
   } catch (error) {
     console.error('Error initializing GoogleAuth:', error);
