@@ -247,11 +247,11 @@ export default function LandingPage() {
         }
       } else {
         const errorData = await response.json();
-        throw new Error(`Failed to submit form: ${response.status} ${response.statusText}. ${errorData.error || ''}`)
+        throw new Error(`Failed to submit form: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
       }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      alert(`There was an error submitting your form. Please try again. Error details: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      alert(`There was an error submitting your form. Please try again. Error details: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }
 
@@ -271,7 +271,7 @@ export default function LandingPage() {
           return false
         }
       }
-    } catch (error) {
+    } catch (err) {
       setPhoneError('Please enter a valid US or Canadian phone number')
       return false
     }
