@@ -12,6 +12,7 @@
     "@radix-ui/react-progress": "^1.1.0",
     "google-auth-library": "^9.14.2",
     "googleapis": "^144.0.0",
+    "libphonenumber-js": "^1.11.13",
     "next": "15.0.0",
     "react": "19.0.0-rc-65a56d0e-20241020",
     "react-dom": "19.0.0-rc-65a56d0e-20241020",
