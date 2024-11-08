@@ -51,14 +51,15 @@ const SHEET_IDS = {
   buy: '1DO_gLNJnUKK5aRSW7NeuFurWUbC6_mq7O_R4YoN1vI4',
   sell: '1WjcZ1h_a9DUZv-RvKe6Gx6Hy8TF4AVyA-reKFOBgaYg',
   rent: '15egXqR6RUnYU_OB_olzgmq93qeAagj8J94GK7xcmwc4'
-};
+} as const;
 
-function preprocessValue(value: any): string {
+type FormValue = string | string[] | number | boolean | null | undefined;
+
+function preprocessValue(value: FormValue): string {
   if (Array.isArray(value)) {
-    return value.map(v => preprocessValue(v)).join('; ');
+    return value.map(v => String(v).trim()).join('; ');
   }
   if (typeof value === 'string') {
-    // Remove dollar signs, replace commas with spaces, and trim whitespace
     return value.replace(/\$/g, '').replace(/,/g, ' ').trim();
   }
   if (value === null || value === undefined) {
@@ -67,11 +68,19 @@ function preprocessValue(value: any): string {
   return String(value).trim();
 }
 
+type FormData = {
+  userType: keyof typeof SHEET_IDS;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  [key: string]: FormValue;
+}
+
 export async function POST(req: Request) {
   console.log('Received form submission request');
 
   try {
-    const body = await req.json();
+    const body = await req.json() as FormData;
     console.log('Received form data:', JSON.stringify(body, null, 2));
 
     console.log('Getting Sheets API...');
@@ -80,11 +89,11 @@ export async function POST(req: Request) {
 
     const { userType, name, email, phoneNumber, ...otherData } = body;
 
-    if (!userType || !SHEET_IDS[userType as keyof typeof SHEET_IDS]) {
+    if (!userType || !SHEET_IDS[userType]) {
       throw new Error('Invalid or missing user type');
     }
 
-    const sheetId = SHEET_IDS[userType as keyof typeof SHEET_IDS];
+    const sheetId = SHEET_IDS[userType];
 
     const processedData = Object.entries(otherData).map(([key, value]) => {
       const processedValue = preprocessValue(value);
