@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react'
 import Image from 'next/image'
+import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js'
 
 type Question = {
   id: string;
@@ -21,6 +22,12 @@ export default function LandingPage() {
   const [editingField, setEditingField] = useState<string | null>(null)
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
+
+  // New state for personal information
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [phoneError, setPhoneError] = useState('')
 
   const buyQuestions: Question[] = [
     {
@@ -214,38 +221,68 @@ export default function LandingPage() {
   }
 
   const handleFinalSubmit = async () => {
-  console.log('Submitting form:', answers);
+    console.log('Form submitted:', { name, email, phoneNumber, userType, ...answers })
+    
+    try {
+      const response = await fetch('/api/submit-form', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          phoneNumber,
+          userType,
+          ...answers,
+        }),
+      });
 
-  try {
-    const response = await fetch('/api/submit-form', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userType,
-        ...answers,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setIsFinalSubmitted(true);
+        } else {
+          throw new Error(data.error || 'Unknown error occurred');
+        }
+      } else {
+        const errorData = await response.json();
+        throw new Error(`Failed to submit form: ${response.status} ${response.statusText}. ${errorData.error || ''}`)
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert(`There was an error submitting your form. Please try again. Error details: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
-
-    const data = await response.json();
-
-    if (data.success) {
-      setIsFinalSubmitted(true);
-      console.log('Form submitted successfully');
-    } else {
-      throw new Error(data.message || 'Failed to submit form');
-    }
-  } catch (error) {
-    console.error('Error submitting form:', error);
-    alert(`There was an error submitting your form. Please try again. Error details: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-}
+
+  const validatePhoneNumber = (number: string) => {
+    try {
+      const phoneNumber = parsePhoneNumber(number, 'US')
+      if (phoneNumber && isValidPhoneNumber(phoneNumber.number, 'US')) {
+        setPhoneError('')
+        return true
+      } else {
+        const canadaPhoneNumber = parsePhoneNumber(number, 'CA')
+        if (canadaPhoneNumber && isValidPhoneNumber(canadaPhoneNumber.number, 'CA')) {
+          setPhoneError('')
+          return true
+        } else {
+          setPhoneError('Please enter a valid US or Canadian phone number')
+          return false
+        }
+      }
+    } catch (error) {
+      setPhoneError('Please enter a valid US or Canadian phone number')
+      return false
+    }
+  }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const number = e.target.value
+    setPhoneNumber(number)
+    validatePhoneNumber(number)
+  }
+
   const currentQuestion = questions[step]
   const isAnswered = answers[currentQuestion?.id]
 
@@ -265,23 +302,56 @@ export default function LandingPage() {
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6">
           {!userType ? (
             <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">Personal Information</h2>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Full Name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  required
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email Address"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  required
+                />
+                <div>
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={handlePhoneChange}
+                    placeholder="Phone Number"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    required
+                  />
+                  {phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
+                </div>
+              </div>
               <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">What would you like to do?</h2>
               <div className="grid grid-cols-3 gap-4">
                 <button
                   onClick={() => handleUserTypeSelection('buy')}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  disabled={!name || !email || !phoneNumber || !!phoneError}
+                  className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
                 >
                   Buy
                 </button>
                 <button
                   onClick={() => handleUserTypeSelection('sell')}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  disabled={!name || !email || !phoneNumber || !!phoneError}
+                  className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
                 >
                   Sell
                 </button>
                 <button
                   onClick={() => handleUserTypeSelection('rent')}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  disabled={!name || !email || !phoneNumber || !!phoneError}
+                  className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
                 >
                   Rent
                 </button>
@@ -389,6 +459,20 @@ export default function LandingPage() {
           ) : isVerifying && !isFinalSubmitted ? (
             <div className="space-y-4">
               <h2 className="text-xl font-semibold text-gray-700  mb-3 text-center">Verify Your Information</h2>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Name:</span>
+                  <span className="text-sm text-gray-700">{name}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Email:</span>
+                  <span className="text-sm text-gray-700">{email}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Phone:</span>
+                  <span className="text-sm text-gray-700">{phoneNumber}</span>
+                </div>
+              </div>
               {questions.map((q) => (
                 <div key={q.id} className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">{q.question}</span>
@@ -461,6 +545,10 @@ export default function LandingPage() {
                   setIsFinalSubmitted(false)
                   setOverallProgress(0);
                   setSelectedAnswers([]);
+                  setName('');
+                  setEmail('');
+                  setPhoneNumber('');
+                  setPhoneError('');
                 }}
                 className="mt-4 px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               >
