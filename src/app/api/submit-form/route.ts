@@ -11,7 +11,7 @@ async function initializeGoogleAuth() {
     const keyString = process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}';
     const keyFile = JSON.parse(keyString as string);
 
-    // 2. Create a JWT client
+    // Create a JWT client
     auth = new google.auth.JWT({
       email: keyFile.client_email,
       key: keyFile.private_key,
@@ -49,6 +49,12 @@ async function getSheets(): Promise<sheets_v4.Sheets> {
   return sheets;
 }
 
+const SHEET_IDS = {
+  buy: '1DO_gLNJnUKK5aRSW7NeuFurWUbC6_mq7O_R4YoN1vI4',
+  sell: '1WjcZ1h_a9DUZv-RvKe6Gx6Hy8TF4AVyA-reKFOBgaYg',
+  rent: '15egXqR6RUnYU_OB_olzgmq93qeAagj8J94GK7xcmwc4'
+};
+
 export async function POST(req: Request) {
   console.log('Received form submission request');
 
@@ -56,39 +62,38 @@ export async function POST(req: Request) {
     const body = await req.json();
     console.log('Received form data:', JSON.stringify(body, null, 2));
 
-    // if (!process.env.GOOGLE_SHEET_ID) {
-    //   throw new Error('Missing required environment variable: GOOGLE_SHEET_ID');
-    // }
-
     console.log('Getting Sheets API...');
     const sheets = await getSheets();
     console.log('Sheets API obtained successfully');
 
+    const { userType, name, email, phoneNumber, ...otherData } = body;
+
+    if (!userType || !SHEET_IDS[userType as keyof typeof SHEET_IDS]) {
+      throw new Error('Invalid or missing user type');
+    }
+
+    const sheetId = SHEET_IDS[userType as keyof typeof SHEET_IDS];
+
     const values = [
       [
         new Date().toISOString(),
-        body.userType,
-        Array.isArray(body.budget) ? body.budget.join(', ') : body.budget,
-        Array.isArray(body.homeType) ? body.homeType.join(', ') : body.homeType,
-        body.bedrooms,
-        body.bathrooms,
-        body.location,
-        body.timeline,
-        body.preApproval,
-        body.agentContract,
+        name,
+        email,
+        phoneNumber,
+        ...Object.values(otherData)
       ],
     ];
 
-    console.log('Appending data to Google Sheet...');
+    console.log(`Appending data to Google Sheet for ${userType}...`);
 
     const response = await sheets.spreadsheets.values.append({
-      spreadsheetId: '1DO_gLNJnUKK5aRSW7NeuFurWUbC6_mq7O_R4YoN1vI4',
-      range: 'A1:A10',
+      spreadsheetId: sheetId,
+      range: 'A1',
       valueInputOption: 'USER_ENTERED',
       requestBody: { values },
     });
 
-    console.log('Data successfully appended to Google Sheet');
+    console.log(`Data successfully appended to Google Sheet for ${userType}`);
     return NextResponse.json({ success: true, data: response.data });
 
   } catch (error: unknown) {
