@@ -238,20 +238,16 @@ export default function LandingPage() {
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setIsFinalSubmitted(true);
-        } else {
-          throw new Error(data.error || 'Unknown error occurred');
-        }
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setIsFinalSubmitted(true);
       } else {
-        const errorData = await response.json();
-        throw new Error(`Failed to submit form: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
+        throw new Error(data.error || 'Unknown error occurred');
       }
-    } catch (err) {
-      console.error('Error submitting form:', err);
-      alert(`There was an error submitting your form. Please try again. Error details: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } catch (error: unknown) {
+      console.error('Error submitting form:', error);
+      alert(`There was an error submitting your form. Please try again. ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
     }
   }
 
@@ -271,7 +267,7 @@ export default function LandingPage() {
           return false
         }
       }
-    } catch (err) {
+    } catch {
       setPhoneError('Please enter a valid US or Canadian phone number')
       return false
     }
