@@ -11,7 +11,6 @@ async function initializeGoogleAuth() {
     const keyString = process.env.GOOGLE_APPLICATION_CREDENTIALS || '{}';
     const keyFile = JSON.parse(keyString as string);
 
-    // Create a JWT client
     auth = new google.auth.JWT({
       email: keyFile.client_email,
       key: keyFile.private_key,
@@ -23,7 +22,6 @@ async function initializeGoogleAuth() {
   }
 }
 
-// Initialize auth outside of the request handler
 initializeGoogleAuth();
 
 let sheets: sheets_v4.Sheets | PromiseLike<sheets_v4.Sheets>
@@ -55,6 +53,20 @@ const SHEET_IDS = {
   rent: '15egXqR6RUnYU_OB_olzgmq93qeAagj8J94GK7xcmwc4'
 };
 
+function preprocessValue(value: any): string {
+  if (Array.isArray(value)) {
+    return value.map(v => preprocessValue(v)).join('; ');
+  }
+  if (typeof value === 'string') {
+    // Remove dollar signs, replace commas with spaces, and trim whitespace
+    return value.replace(/\$/g, '').replace(/,/g, ' ').trim();
+  }
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value).trim();
+}
+
 export async function POST(req: Request) {
   console.log('Received form submission request');
 
@@ -74,17 +86,24 @@ export async function POST(req: Request) {
 
     const sheetId = SHEET_IDS[userType as keyof typeof SHEET_IDS];
 
+    const processedData = Object.entries(otherData).map(([key, value]) => {
+      const processedValue = preprocessValue(value);
+      console.log(`Processed ${key}:`, processedValue);
+      return processedValue;
+    });
+
     const values = [
       [
         new Date().toISOString(),
-        name,
-        email,
-        phoneNumber,
-        ...Object.values(otherData)
+        preprocessValue(name),
+        preprocessValue(email),
+        preprocessValue(phoneNumber),
+        ...processedData
       ],
     ];
 
     console.log(`Appending data to Google Sheet for ${userType}...`);
+    console.log('Preprocessed values:', JSON.stringify(values, null, 2));
 
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
