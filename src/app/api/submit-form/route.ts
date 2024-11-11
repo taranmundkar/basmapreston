@@ -116,8 +116,9 @@ export async function POST(req: Request) {
 
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
-      range: 'A1',
+      range: 'A2', // Changed from 'A1' to 'A2' to start from the second row
       valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS', // This ensures new data is inserted as new rows
       requestBody: { values },
     });
 
